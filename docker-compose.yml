@@ -1,0 +1,40 @@
+services:
+  app:
+    build: .
+    volumes:
+      - .:/var/www
+    environment:
+      - APP_ENV=local  # CORREÇÃO: Isso NÃO é a APP_KEY!
+      - APP_KEY=${APP_KEY}  # Adicione esta linha
+      - DB_HOST=db
+      - DB_DATABASE=pastelaria
+      - DB_USERNAME=root
+      - DB_PASSWORD=123456
+    depends_on:  # Adicione esta seção
+      - db
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=pastelaria
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:  # Adicione para garantir que o MySQL está pronto
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8010:80"
+    volumes:
+      - ./:/var/www
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+volumes:
+  mysql_data:
