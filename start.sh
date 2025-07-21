@@ -7,7 +7,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE} API Pastelaria Deliciosa - Setup${NC}"
+echo -e "${BLUE} API Pastelaria - Setup${NC}"
 echo "=================================="
 
 # Função para verificar se comando existe
@@ -67,7 +67,8 @@ echo -e "${GREEN} MySQL está pronto${NC}"
 
 # Passo 5: Instalar dependências PHP
 echo -e "${YELLOW} Instalando dependências com Composer...${NC}"
-docker compose run --rm app composer install --optimize-autoloader
+docker compose exec app composer install --optimize-autoloader
+sleep 2
 
 # Passo 6: Gerar chave da aplicação
 echo -e "${YELLOW} Gerando APP_KEY...${NC}"
@@ -103,7 +104,7 @@ fi
 
 echo ""
 echo -e "${GREEN} Setup concluído com sucesso!${NC}"
-
+echo ""
 echo -e "${BLUE} Para executar os testes:${NC}"
 echo -e "   docker compose exec app php artisan test"
 echo ""
