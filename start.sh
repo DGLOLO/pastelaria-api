@@ -88,12 +88,8 @@ docker compose exec app php artisan route:clear
 docker compose exec app php artisan view:clear
 
 # Passo 9: Rodar migrations
-echo -e "${YELLOW} Rodando migrations...${NC}"
-docker compose exec app php artisan migrate --force
-
-# Passo 10: Rodar seeders
-echo -e "${YELLOW} Executando seeders...${NC}"
-docker compose exec app php artisan db:seed --force
+echo -e "${YELLOW} Rodando migrations e seeders (migrate:fresh --seed)...${NC}"
+docker compose exec app php artisan migrate:fresh --seed --force
 
 # Passo 11: Verificar se tudo está funcionando
 echo -e "${YELLOW} Verificando se a aplicação está funcionando...${NC}"

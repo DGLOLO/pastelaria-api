@@ -31,8 +31,8 @@ class EmailPreviewController extends Controller
 
         // Se não foi fornecido order_id ou não encontrou, criar dados fictícios
         $customer = Customer::first() ?? Customer::create([
-            'nome' => 'Adriel Pedrosa Sobrinho',
-            'email' => 'adriel@exemplo.com',
+            'nome' => 'Allan Cerquera',
+            'email' => 'Allan@exemplo.com',
             'telefone' => '11999999999',
             'data_nascimento' => '1990-01-01',
             'endereco' => 'Rua das Flores, 123',
