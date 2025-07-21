@@ -24,9 +24,9 @@ class OrderTest extends TestCase
 
     $response->assertStatus(201);
 
-    $this->assertDatabaseHas('order_product', [
-        'order_id' => $response['id'],
-        'product_id' => $produto1->id
+    $this->assertDatabaseHas('orders_products', [
+        'orders_id' => $response['id'],
+        'products_id' => $produto1->id
     ]);
 }
 

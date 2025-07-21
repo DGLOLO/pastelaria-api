@@ -13,7 +13,7 @@ class Product extends Model
 
     protected $fillable = ['nome', 'preco', 'foto'];
 
-    public function pedidos()
+    public function orders()
     {
         return $this->belongsToMany(Order::class);
     }
