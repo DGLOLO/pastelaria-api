@@ -103,11 +103,7 @@ fi
 
 echo ""
 echo -e "${GREEN} Setup concluído com sucesso!${NC}"
-echo "=================================="
-echo -e "${BLUE} Acesse:${NC}"
-echo -e "    API: ${GREEN}http://localhost/api${NC}"
-echo -e "    Documentação: ${GREEN}http://localhost/api/documentation${NC}"
-echo ""
+
 echo -e "${BLUE} Para executar os testes:${NC}"
 echo -e "   docker compose exec app php artisan test"
 echo ""
