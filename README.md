@@ -38,6 +38,15 @@ Este script irá:
 - **Documentação Swagger:** http://localhost/api/documentation
 - **Preview do Email:** http://localhost/email-preview
 
+### 5. Comando que para a aplicação
+```bash
+docker compose down
+
+### 6. Comando para reiniciar a aplicação
+```bash
+docker compose up -d
+
+
 
 ### Configuração de Email
 O projeto está configurado para usar **Mailtrap** em desenvolvimento:
