@@ -136,24 +136,37 @@
 
         <div class="content">
 
-            @if(isset($orders) && $orders->count() > 0)
             <div class="preview-section">
-                <h2>📋 Pedidos Disponíveis</h2>
-                <div class="orders-list">
-                    @foreach($orders as $order)
-                    <div class="order-item">
-                        <div class="order-id">Pedido #{{ $order->id }}</div>
-                        <div class="order-customer">{{ $order->customer->nome }} ({{ $order->customer->email }})</div>
-                        <div class="order-products">
-                            {{ $order->products->count() }} produto(s) -
-                            Total: R$ {{ number_format($order->products->sum('preco'), 2, ',', '.') }}
-                        </div>
-                        <a href="{{ route('email.preview.data', $order->id) }}" target="_blank" class="preview-button" style="margin: 10px 0 0 0; font-size: 12px; padding: 8px 15px;">
-                            Ver Email (ID: {{ $order->id }})
-                    </div>
-                    @endforeach
-                </div>
+                <h2>📧 Visualizar Email</h2>
+                <a href="{{ route('email.preview') }}" target="_blank" class="preview-button">
+                    👁️ Preview Padrão
+                </a>
+                @if(isset($orders) && $orders->count() > 0)
+                    <a href="{{ route('email.preview') }}?order_id={{ $orders->first()->id }}" target="_blank" class="preview-button">
+                        📋 Preview com Pedido #{{ $orders->first()->id }}
+                    </a>
+                @endif
             </div>
+
+            @if(isset($orders) && $orders->count() > 0)
+                <div class="preview-section">
+                    <h2>📋 Pedidos Disponíveis</h2>
+                    <div class="orders-list">
+                        @foreach($orders as $order)
+                            <div class="order-item">
+                                <div class="order-id">Pedido #{{ $order->id }}</div>
+                                <div class="order-customer">{{ $order->customer->nome }} ({{ $order->customer->email }})</div>
+                                <div class="order-products">
+                                    {{ $order->products->count() }} produto(s) - 
+                                    Total: R$ {{ number_format($order->products->sum('preco'), 2, ',', '.') }}
+                                </div>
+                                <a href="{{ route('email.preview.order', $order->id) }}" target="_blank" class="preview-button" style="margin: 10px 0 0 0; font-size: 12px; padding: 8px 15px;">
+                                    Ver Email
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
             @endif
 
             <div class="preview-section">

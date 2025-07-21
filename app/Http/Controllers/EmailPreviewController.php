@@ -16,9 +16,20 @@ class EmailPreviewController extends Controller
         return view('email-preview-index', compact('orders'));
     }
 
-    public function preview()
+    public function preview(Request $request)
     {
-        // Criar dados fictícios para preview
+        $orderId = $request->get('order_id');
+        
+        // Se um order_id foi fornecido, buscar esse pedido específico
+        if ($orderId) {
+            $order = Order::with(['customer', 'products'])->find($orderId);
+            
+            if ($order) {
+                return view('emails.order-confirmation', compact('order'));
+            }
+        }
+
+        // Se não foi fornecido order_id ou não encontrou, criar dados fictícios
         $customer = Customer::first() ?? Customer::create([
             'nome' => 'Adriel Pedrosa Sobrinho',
             'email' => 'adriel@exemplo.com',
@@ -31,40 +42,20 @@ class EmailPreviewController extends Controller
         ]);
 
         // Criar pedido fictício
-        $order = Order::first() ?? Order::create([
+        $order = Order::create([
             'customers_id' => $customer->id
         ]);
 
-        // Adicionar produtos ao pedido se não existirem
-        if ($order->products->count() === 0) {
-            $products = Product::take(3)->get();
-            if ($products->count() > 0) {
-                $order->products()->attach($products->pluck('id'));
-            }
+        // Adicionar produtos ao pedido
+        $products = Product::take(3)->get();
+        if ($products->count() > 0) {
+            $order->products()->attach($products->pluck('id'));
         }
 
         // Recarregar relacionamentos
         $order->load(['customer', 'products']);
 
         // Retornar a view do email
-        return view('emails.order-confirmation', compact('order'));
-    }
-
-    public function previewWithData(Request $request)
-    {
-        $orderId = $request->get('order_id');
-        
-        if ($orderId) {
-            $order = Order::with(['customer', 'products'])->find($orderId);
-            
-            if (!$order) {
-                return redirect()->route('email.preview')->with('error', 'Pedido não encontrado');
-            }
-        } else {
-            // Usar dados padrão
-            return $this->preview();
-        }
-
         return view('emails.order-confirmation', compact('order'));
     }
 
