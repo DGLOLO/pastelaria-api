@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderConfirmation;
+use Symfony\Component\HttpFoundation\Response;
 
 class OrderController extends Controller
 {
@@ -138,7 +139,12 @@ class OrderController extends Controller
         // Send email notification with order details
         Mail::to($order->customer->email)->send(new OrderConfirmation($order));
 
-        return response()->json($order->load('products'), 201);
+        return response()->json([
+            ...$order->toArray(),
+            'customer' => $order->customer,
+            'products' => $order->products,
+            'message' => 'Pedido criado com sucesso.' // Mensagem adicionada
+        ], Response::HTTP_CREATED);
     }
 
     /**
