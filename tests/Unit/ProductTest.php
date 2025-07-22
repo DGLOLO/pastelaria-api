@@ -1,41 +1,101 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\Produto;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Http\UploadedFile;
+use Tests\TestCase;
+use App\Models\Product;
+use Symfony\Component\HttpFoundation\Response;
 
-class ProdutoTest extends TestCase
+class ProductTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, WithFaker;
 
-    public function test_cria_produto_com_sucesso()
+    protected string $endpoint = '/api/products';
+
+    protected function setUp(): void
     {
-        $response = $this->postJson('/api/products', [
-            'nome' => 'Coxinha',
-            'preco' => 5.50,
-            'foto' => 'coxinha.jpg',
-        ]);
-
-        $response->assertStatus(201);
-
-        $this->assertDatabaseHas('products', [
-            'nome' => 'Coxinha',
-            'preco' => 5.50,
-            'foto' => 'coxinha.jpg',
-        ]);
+        parent::setUp();
     }
 
-    public function test_nao_cria_produto_sem_foto()
+    public function test_lista_produtos_com_sucesso(): void
     {
-        $response = $this->postJson('/api/products', [
-            'nome' => 'Pastel',
-            'preco' => 4.00,
-        ]);
+        Product::factory()->count(3)->create();
 
-        $response->assertStatus(422); 
+        $response = $this->getJson($this->endpoint);
 
-        $response->assertJsonValidationErrors('foto');
+        $response->assertStatus(Response::HTTP_OK)->assertJsonCount(3, 'data.data');
+    }
+
+
+    public function test_nao_cria_Product_com_preco_invalido(): void
+    {
+        $ProductData = Product::factory()->make()->toArray();
+
+        $ProductData['preco'] = 'preco-invalido';
+
+        $response = $this->postJson($this->endpoint, $ProductData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+                 ->assertJsonValidationErrors(['preco']);
+    }
+
+    public function test_nao_cria_Product_sem_campos_obrigatorios(): void
+    {
+        $response = $this->postJson($this->endpoint, []);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+                 ->assertJsonValidationErrors(['nome', 'preco', 'foto']);
+    }
+
+    public function test_mostra_detalhes_do_Product(): void
+    {
+        $Product = Product::factory()->create();
+
+        $response = $this->getJson("{$this->endpoint}/{$Product->id}");
+
+        $response->assertStatus(Response::HTTP_OK)
+                 ->assertJsonFragment(['id' => (string) $Product->id, 'nome' => $Product->nome]);
+    }
+
+    public function test_mostra_Product_invalido(): void
+    {
+        $response = $this->getJson("{$this->endpoint}/999999");
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function test_atualiza_Product_com_sucesso(): void
+    {
+        $Product = Product::factory()->create();
+
+        $novoNome = $this->faker->words(3, true);
+        $novoPreco = $this->faker->randomFloat(2, 10, 1000);
+
+        $dadosAtualizados = [
+            'nome' => $novoNome,
+            'preco' => $novoPreco,
+        ];
+
+        $response = $this->putJson("{$this->endpoint}/{$Product->id}", $dadosAtualizados);
+
+        $response->assertStatus(Response::HTTP_OK)
+                 ->assertJsonFragment(['nome' => $novoNome, 'preco' => $novoPreco]);
+
+        $this->assertDatabaseHas('products', ['id' => $Product->id, 'nome' => $novoNome, 'preco' => $novoPreco]);
+    }
+
+    public function test_deleta_Product_com_soft_delete(): void
+    {
+        $Product = Product::factory()->create();
+
+        $response = $this->deleteJson("{$this->endpoint}/{$Product->id}");
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+
+        $this->assertSoftDeleted('products', ['id' => $Product->id]);
+        $this->assertDatabaseMissing('products', ['id' => $Product->id, 'deleted_at' => null]);
     }
 }
