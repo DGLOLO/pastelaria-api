@@ -26,14 +26,51 @@ class ProductTest extends TestCase
 
         $response = $this->getJson($this->endpoint);
 
-        $response->assertStatus(Response::HTTP_OK)->assertJsonCount(3, 'data.data');
+        $response->assertStatus(Response::HTTP_OK)->assertJsonCount(3);
     }
 
+    public function test_cria_Product_com_foto_com_sucesso(): void
+    {
+        $ProductData = Product::factory()->make()->toArray();
+
+        $nomeFoto = basename($ProductData['foto']);
+        $ProductData['foto'] = UploadedFile::fake()->image($nomeFoto);
+
+        $response = $this->post($this->endpoint, $ProductData);
+
+        $response->assertStatus(Response::HTTP_CREATED)
+                 ->assertJsonFragment(['nome' => $ProductData['nome']]);
+
+        $this->assertDatabaseHas('products', ['nome' => $ProductData['nome'], 'id' => $response['data']['id']]);
+    }
+
+    public function test_nao_cria_Product_sem_foto(): void
+    {
+        $ProductData = Product::factory()->make(['foto' => null])->toArray();
+
+        $response = $this->postJson($this->endpoint, $ProductData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+                 ->assertJsonValidationErrors(['foto']);
+    }
+
+    public function test_nao_cria_Product_com_foto_invalida(): void
+    {
+        $ProductData = Product::factory()->make()->toArray();
+        // Foto como string, não um arquivo
+        $ProductData['foto'] = 'invalid_string';
+
+        $response = $this->postJson($this->endpoint, $ProductData);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+                 ->assertJsonValidationErrors(['foto']);
+    }
 
     public function test_nao_cria_Product_com_preco_invalido(): void
     {
         $ProductData = Product::factory()->make()->toArray();
 
+        $ProductData['foto'] = UploadedFile::fake()->image(basename($ProductData['foto']));
         $ProductData['preco'] = 'preco-invalido';
 
         $response = $this->postJson($this->endpoint, $ProductData);

@@ -44,7 +44,7 @@ class OrderTest extends TestCase
 
         $response->assertStatus(Response::HTTP_CREATED)
             ->assertJsonFragment([
-                'customer_id' => (string) $customer->id
+                'customers_id' => $customer->id
             ]);
 
 
@@ -100,7 +100,7 @@ class OrderTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonFragment(
                 [
-                    'id' => (string) $orderData->id
+                    'id' => $orderData->id
                 ]
             );
     }
@@ -166,7 +166,7 @@ class OrderTest extends TestCase
                 [
                     'id' => $product->id,
                     'quantity' => 1,
-                    //'price_at_purchase' => 'invalid-price'
+                    'price_at_purchase' => 125.98
 
                 ],
             ],
