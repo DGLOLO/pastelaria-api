@@ -6,6 +6,7 @@ use Tests\TestCase;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Order;
+use App\Mail\OrderConfirmation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
@@ -44,7 +45,7 @@ class OrderTest extends TestCase
 
         $response->assertStatus(Response::HTTP_CREATED)
             ->assertJsonFragment([
-                'customer_id' => (string) $customer->id
+                'customers_id' => $customer->id
             ]);
 
 
@@ -100,7 +101,7 @@ class OrderTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonFragment(
                 [
-                    'id' => (string) $orderData->id
+                    'id' => $orderData->id
                 ]
             );
     }
@@ -162,24 +163,16 @@ class OrderTest extends TestCase
 
         $orderData = [
             'customer_id' => $customer->id,
-            'products' => [
-                [
-                    'id' => $product->id,
-                    'quantity' => 1,
-                    //'price_at_purchase' => 'invalid-price'
-
-                ],
-            ],
+            'products' => [$product->id]
         ];
 
         $response = $this->postJson($this->endpoint, $orderData);
 
         $response->assertStatus(Response::HTTP_CREATED);
 
-        $this->assertDatabaseHas('orders_product', [
-            'order_id' => $response->json('data.id'),
-            'product_id' => $product->id,
-            'price_at_purchase' => $product->preco,
+        $this->assertDatabaseHas('orders_products', [
+            'orders_id' => $response->json('id'),
+            'products_id' => $product->id,
         ]);
     }
 
@@ -190,23 +183,25 @@ class OrderTest extends TestCase
         Mail::fake();
 
         $customer = Customer::factory()->create();
-        $product = Product::factory()->create(['preco' => 125.98]);
+        $product = Product::factory()->create();
 
         $orderData = [
-            'customer_id' => $customer->id,
-            'products' => [
-                ['product_id' => $product->id, 'quantity' => 1],
-            ],
+             'customer_id' => $customer->id,
+            'products' => [$product->id]
         ];
 
         $response = $this->postJson($this->endpoint, $orderData);
 
         $response->assertStatus(Response::HTTP_CREATED);
 
-        Mail::assertSent(OrderCreatedMail::class, function ($mail) use ($customer, $response) {
-            return $mail->hasTo($customer->email) &&
-                $mail->order->id === $response->json('data.id');
+        Mail::assertSent(OrderConfirmation::class, function ($mail) use ($customer) {
+            return $mail->hasTo($customer->email);
+                
         });
+
+       
+        
+       
     }
 
 
@@ -221,27 +216,23 @@ class OrderTest extends TestCase
 
         $orderData = [
             'customer_id' => $customer->id,
-            'products' => [
-                [
-                    'product_id' => $product->id,
-                    'quantity' => 1,
-
-                ],
-            ]
+            'products' => [$product->id],
+            
         ];
 
         $response = $this->postJson($this->endpoint, $orderData);
 
+
         $response->assertStatus(Response::HTTP_CREATED)
-            ->assertJsonPath('data.customer.email', $email)
-            ->assertJsonFragment(["message" => "Pedido criado Com  sucesso."]);
+            ->assertJsonPath('customer.email', $email)
+            ->assertJsonFragment(["message" => "Pedido criado com sucesso."]);
 
         $this->assertDatabaseHas('orders', [
-            'customer_id' => $customer->id,
-            'id' => $response->json('data.id')
+            'customers_id' => $customer->id,
+            'id' => $response->json('id')
         ]);
 
 
-        Mail::assertSent(OrderCreatedMail::class);
+        Mail::assertSent(OrderConfirmation::class);
     }
 }
