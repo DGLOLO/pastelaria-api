@@ -10,8 +10,8 @@ class OrderFactory extends Factory
     public function definition(): array
     {
         return [
-            'customers_id' => Customer::factory(), // cria e vincula um cliente automaticamente
-            'total' => $this->faker->randomFloat(2, 10, 500), // total fictício
+            'customers_id' => Customer::factory(),
+            'total' => $this->faker->randomFloat(2, 10, 500), 
         ];
     }
 }
