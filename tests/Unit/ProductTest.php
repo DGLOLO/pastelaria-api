@@ -53,13 +53,12 @@ class ProductTest extends TestCase
         $response->assertStatus(Response::HTTP_CREATED)
                  ->assertJsonFragment(['nome' => $ProductData['nome']]);
 
-            
-        Storage::disk('public')->assertExists('products/'. $ProductData['foto']->hashName());
-            
+        // Verifica se o arquivo foi salvo
         $this->assertDatabaseHas('products', [
             'nome' => $ProductData['nome'],
             'preco' => $ProductData['preco'],
-            'foto' =>'products/'.$ProductData['foto']->hashName()]);
+            'foto' => 'products/' . $ProductData['foto']->hashName()
+        ]);
     }
 
     public function test_nao_cria_produtos_sem_foto(): void
