@@ -70,18 +70,23 @@ class ProductController extends Controller
      *     )
      * )
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'nome'  => 'required|string',
-            'preco' => 'required|numeric',
-            'foto'  => 'required|string',
-        ]);
+   public function store(Request $request)
+{
+    $validated = $request->validate([
+        'nome' => 'required',
+        'preco' => 'required|numeric',
+        'foto' => 'required|image'
+    ]);
 
-        $product = Product::create($request->all());
-
-        return response()->json($product, 201);
+    if ($request->hasFile('foto')) {
+        $path = $request->file('foto')->store('products', 'public');
+        $validated['foto'] = $path;
     }
+
+    $product = Product::create($validated);
+    
+    return response()->json($product, 201);
+}
 
     /**
      * @OA\Get(

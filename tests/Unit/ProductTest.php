@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 use App\Models\Product;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 class ProductTest extends TestCase
@@ -29,22 +30,39 @@ class ProductTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)->assertJsonCount(3);
     }
 
-    public function test_cria_Product_com_foto_com_sucesso(): void
+    public function test_cria_produtos_com_foto_com_sucesso(): void
     {
-        $ProductData = Product::factory()->make()->toArray();
 
-        $nomeFoto = basename($ProductData['foto']);
-        $ProductData['foto'] = UploadedFile::fake()->image($nomeFoto);
+        Storage::fake('public');
 
-        $response = $this->post($this->endpoint, $ProductData);
+        $file = UploadedFile::fake()->image('products.jpg');
+
+        //$nomeFoto = basename($ProductData['foto']);
+        $ProductData = [
+            'nome' => 'nome produto',
+            'preco' => 125.98,
+            'foto' => $file
+        ];
+
+        $response = $this-> call ('post', $this->endpoint, $ProductData,[],['foto'=> $file]);
+
+
+
+       
 
         $response->assertStatus(Response::HTTP_CREATED)
                  ->assertJsonFragment(['nome' => $ProductData['nome']]);
 
-        $this->assertDatabaseHas('products', ['nome' => $ProductData['nome'], 'id' => $response['data']['id']]);
+            
+        Storage::disk('public')->assertExists('products/'. $ProductData['foto']->hashName());
+            
+        $this->assertDatabaseHas('products', [
+            'nome' => $ProductData['nome'],
+            'preco' => $ProductData['preco'],
+            'foto' =>'products/'.$ProductData['foto']->hashName()]);
     }
 
-    public function test_nao_cria_Product_sem_foto(): void
+    public function test_nao_cria_produtos_sem_foto(): void
     {
         $ProductData = Product::factory()->make(['foto' => null])->toArray();
 
@@ -54,11 +72,11 @@ class ProductTest extends TestCase
                  ->assertJsonValidationErrors(['foto']);
     }
 
-    public function test_nao_cria_Product_com_foto_invalida(): void
+    public function test_nao_cria_produtos_com_foto_invalida(): void
     {
         $ProductData = Product::factory()->make()->toArray();
-        // Foto como string, não um arquivo
-        $ProductData['foto'] = 'invalid_string';
+       
+        $ProductData['foto'] = UploadedFile::fake()->create('documentos.pdf',1000);
 
         $response = $this->postJson($this->endpoint, $ProductData);
 
@@ -66,7 +84,7 @@ class ProductTest extends TestCase
                  ->assertJsonValidationErrors(['foto']);
     }
 
-    public function test_nao_cria_Product_com_preco_invalido(): void
+    public function test_nao_cria_produtos_com_preco_invalido(): void
     {
         $ProductData = Product::factory()->make()->toArray();
 
@@ -79,7 +97,7 @@ class ProductTest extends TestCase
                  ->assertJsonValidationErrors(['preco']);
     }
 
-    public function test_nao_cria_Product_sem_campos_obrigatorios(): void
+    public function test_nao_cria_produtos_sem_campos_obrigatorios(): void
     {
         $response = $this->postJson($this->endpoint, []);
 
@@ -87,24 +105,24 @@ class ProductTest extends TestCase
                  ->assertJsonValidationErrors(['nome', 'preco', 'foto']);
     }
 
-    public function test_mostra_detalhes_do_Product(): void
+    public function test_mostra_detalhes_do_produtos(): void
     {
         $Product = Product::factory()->create();
 
         $response = $this->getJson("{$this->endpoint}/{$Product->id}");
 
         $response->assertStatus(Response::HTTP_OK)
-                 ->assertJsonFragment(['id' => (string) $Product->id, 'nome' => $Product->nome]);
+                 ->assertJsonFragment(['id' => $Product->id, 'nome' => $Product->nome]);
     }
 
-    public function test_mostra_Product_invalido(): void
+    public function test_mostra_produtos_invalido(): void
     {
         $response = $this->getJson("{$this->endpoint}/999999");
 
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
-    public function test_atualiza_Product_com_sucesso(): void
+    public function test_atualiza_produtos_com_sucesso(): void
     {
         $Product = Product::factory()->create();
 
@@ -124,7 +142,7 @@ class ProductTest extends TestCase
         $this->assertDatabaseHas('products', ['id' => $Product->id, 'nome' => $novoNome, 'preco' => $novoPreco]);
     }
 
-    public function test_deleta_Product_com_soft_delete(): void
+    public function test_deleta_produtos_com_soft_delete(): void
     {
         $Product = Product::factory()->create();
 
