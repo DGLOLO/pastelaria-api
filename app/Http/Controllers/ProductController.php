@@ -41,11 +41,14 @@ class ProductController extends Controller
      *     tags={"Products"},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"nome","preco","foto"},
-     *             @OA\Property(property="nome", type="string", example="Pastel de Carne"),
-     *             @OA\Property(property="preco", type="number", format="float", example=8.50),
-     *             @OA\Property(property="foto", type="string", example="https://example.com/pastel-carne.jpg")
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 required={"nome","preco","foto"},
+     *                 @OA\Property(property="nome", type="string", example="Pastel de Carne"),
+     *                 @OA\Property(property="preco", type="number", format="float", example=8.50),
+     *                 @OA\Property(property="foto", type="string", example="https://example.com/pastel-carne.jpg", description="URL da imagem ou arquivo de imagem")
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -72,15 +75,22 @@ class ProductController extends Controller
      */
    public function store(Request $request)
 {
-    $validated = $request->validate([
-        'nome' => 'required',
-        'preco' => 'required|numeric',
-        'foto' => 'required|image'
-    ]);
-
+    // Validação diferente para arquivo vs URL
     if ($request->hasFile('foto')) {
+        $validated = $request->validate([
+            'nome' => 'required',
+            'preco' => 'required|numeric',
+            'foto' => 'required|image'
+        ]);
+        
         $path = $request->file('foto')->store('products', 'public');
         $validated['foto'] = $path;
+    } else {
+        $validated = $request->validate([
+            'nome' => 'required',
+            'preco' => 'required|numeric',
+            'foto' => 'required|string|url'
+        ]);
     }
 
     $product = Product::create($validated);
