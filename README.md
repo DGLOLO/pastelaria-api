@@ -1,14 +1,14 @@
-# 🍕 API Pastelaria 
+#  API Pastelaria 
 
 API RESTful para gerenciamento de pedidos de uma pastelaria desenvolvida com Laravel.
 
-## 📋 Requisitos
+##  Requisitos
 
 - Docker
 - Docker Compose
 - Git
 
-## 🚀 Instalação e Execução
+##  Instalação e Execução
 
 ### 1. Clone o repositório
 ```bash
@@ -55,7 +55,7 @@ MAIL_MAILER=log
 ```
 Para produção, configure suas credenciais SMTP no arquivo `.env`.
 
-## 🧪 Testes
+##  Testes
 
 ### Executar todos os testes
 ```bash
@@ -63,10 +63,10 @@ docker compose exec app php artisan test
 ```
 
 ### Testes implementados
-- ✅ **CustomerTest** - Testes de criação de clientes
-- ✅ **ProductTest** - Testes de criação de produtos  
-- ✅ **OrderTest** - Testes de criação de pedidos
-- ✅ **OrderEmailTest** - Testes de envio de emails
+-  **CustomerTest** - Testes de criação de clientes
+-  **ProductTest** - Testes de criação de produtos  
+-  **OrderTest** - Testes de criação de pedidos
+-  **OrderEmailTest** - Testes de envio de emails
 
 ### Cobertura de testes
 - Validações de entrada
@@ -76,7 +76,7 @@ docker compose exec app php artisan test
 - Soft delete
 - Validação de email único
 
-## 🐳 Docker
+##  Docker
 
 ### Containers
 - **app** - Laravel PHP 8.2
@@ -101,7 +101,7 @@ docker compose exec app php artisan db:seed
 docker compose exec app php artisan cache:clear
 ```
 
-## 📚 Documentação da API
+##  Documentação da API
 
 ### Endpoints Principais
 
@@ -127,7 +127,7 @@ docker compose exec app php artisan cache:clear
 
 
 
-## 🔧 Tecnologias Utilizadas
+##  Tecnologias Utilizadas
 
 - **Laravel 11** - Framework PHP
 - **MySQL 8.0** - Banco de dados
