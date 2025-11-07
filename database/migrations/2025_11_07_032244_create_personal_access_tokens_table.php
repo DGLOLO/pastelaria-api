@@ -11,15 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
-        $table->id();
-        $table->string('nome');
-        $table->decimal('preco', 8, 2);
-        $table->string('foto');
-        $table->string('type')->nullable();
-        $table->timestamps();
-        $table->softDeletes();
-    });
+        Schema::create('personal_access_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -27,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('personal_access_tokens');
     }
 };

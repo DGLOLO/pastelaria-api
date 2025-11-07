@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
@@ -13,8 +15,19 @@ class Product extends Model
 
     protected $fillable = ['nome', 'preco', 'foto'];
 
-    public function orders()
+    protected $cast =[
+        'preco'=>'decimal:2',
+    ];
+
+    public function orders(): BelongsToMany
     {
-        return $this->belongsToMany(Order::class);
+        return $this->belongsToMany(Order::class)-> withTimestamps();
+    }
+
+    public function getPhotoUrlAttribute (): String|null{
+        if ($this-> foto){
+            return Storage::disk('public')->url($this->foto);
+        }
+        return null;
     }
 }

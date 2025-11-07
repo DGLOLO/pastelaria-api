@@ -147,11 +147,13 @@ class ProductController extends Controller
      *     ),
      *     @OA\RequestBody(
      *         required=false,
-     *         description="Campos para atualizar (todos opcionais)",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="nome", type="string", example="Pastel de Queijo"),
-     *             @OA\Property(property="preco", type="number", format="float", example=7.50),
-     *             @OA\Property(property="foto", type="string", example="https://example.com/pastel-queijo.jpg")
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(property="nome", type="string", example="Pastel de Queijo"),
+     *                 @OA\Property(property="preco", type="number", format="float", example=7.50),
+     *                 @OA\Property(property="foto", type="string", example="https://example.com/pastel-queijo.jpg")
+     *             )
      *         )
      *     ),
      *     @OA\Response(

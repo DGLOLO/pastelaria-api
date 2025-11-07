@@ -20,7 +20,7 @@ return new class extends Migration
         $table->string('endereco');
         $table->string('complemento')->nullable();
         $table->string('bairro');
-        $table->string('cep');
+        $table->string('cep',9);
         $table->timestamps(); // created_at e updated_at
         $table->softDeletes(); // para soft delete
     });

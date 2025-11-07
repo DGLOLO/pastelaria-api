@@ -7,6 +7,8 @@ use App\Models\Customer;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Mail\OrderConfirmation;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -208,6 +210,144 @@ class OrderController extends Controller
     {
         return Order::with(['products', 'customer'])->findOrFail($id);
     }
+
+
+
+
+
+
+
+    /**
+     * @OA\Put(
+     *     path="/api/orders/{id}",
+     *     summary="Atualizar um pedido existente",
+     *     tags={"Orders"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID do pedido a ser atualizado",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="customer_id", type="integer", example=1, description="ID do cliente"),
+     *             @OA\Property(
+     *                 property="products",
+     *                 type="array",
+     *                 description="Array de IDs dos produtos",
+     *                 @OA\Items(type="integer", example=1)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Pedido atualizado com sucesso",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Pedido atualizado com sucesso."),
+     *             @OA\Property(property="order", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="customer_id", type="integer", example=1),
+     *                 @OA\Property(property="created_at", type="string", format="datetime", example="2024-01-01T10:00:00.000000Z"),
+     *                 @OA\Property(property="updated_at", type="string", format="datetime", example="2024-01-01T10:00:00.000000Z"),
+     *                 @OA\Property(
+     *                     property="customer",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="nome", type="string", example="João Silva"),
+     *                     @OA\Property(property="email", type="string", example="joao@email.com")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="products",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="name", type="string", example="Pastel de Carne"),
+     *                         @OA\Property(property="price", type="number", format="float", example=8.50),
+     *                         @OA\Property(property="photo", type="string", example="https://example.com/pastel-carne.jpg")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erro de validação",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="customer_id",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The selected customer id is invalid.")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="products.0",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The selected products.0 is invalid.")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Pedido não encontrado"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erro interno do servidor"
+     *     )
+     * )
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'customer_id' => 'sometimes|exists:customers,id',
+            'products' => 'sometimes|array|min:1',
+            'products.*' => 'exists:products,id',
+        ]);
+
+        $order = Order::findOrFail($id);
+
+        DB::beginTransaction();
+
+        try {
+            // Atualiza o cliente, se enviado
+            if ($request->has('customer_id')) {
+                $order->update(['customer_id' => $request->customer_id]);
+            }
+
+            // Atualiza os produtos (sincroniza os IDs)
+            if ($request->has('products')) {
+                $order->products()->sync($request->products);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Pedido atualizado com sucesso.',
+                'order' => $order->load(['customer', 'products']),
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Erro ao atualizar pedido: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+
+            return response()->json([
+                'message' => 'Erro ao atualizar o pedido.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
 
     /**
      * @OA\Delete(

@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Order extends Model
 {
@@ -13,14 +15,19 @@ class Order extends Model
 
     protected $fillable = ['customers_id'];
 
-    public function customer()
+    public function customer():BelongsTo
     {
-        return $this->belongsTo(Customer::class, 'customers_id');
+        return $this->belongsTo(Customer::class);
     }
 
-    public function products()
+    public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'orders_products', 'orders_id', 'products_id');
+        return $this->belongsToMany(Product::class, 'orders_products')
+        ->withPivot('quantidade', 'valorCompra') 
+        ->withTimestamps();
+      
     }
+
+
 
 }

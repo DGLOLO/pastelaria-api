@@ -14,12 +14,21 @@ class ProductFactory extends Factory
      *
      * @return array<string, mixed>
      */
+
+
+      public function withFaker()
+        {
+            return \Faker\Factory::create('pt_BR');
+        }
+
+
     public function definition(): array
     {
         return [
             'nome' => $this->faker->word,
             'preco' => $this->faker->randomFloat(2, 1, 100),
-            'foto' => 'default.jpg',
+            'foto' => 'foto/placeholder.jpg',
+            'type' => $this->faker->randomElement(['Pastéis', 'Coxinhas', 'Hambúrgueres', 'Acompanhamentos']),
         ];
     }
 }

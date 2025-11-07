@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class CustomerFactory extends Factory
 {
+
+     public function withFaker()
+        {
+            return \Faker\Factory::create('pt_BR');
+        }
     /**
      * Define the model's default state.
      *
@@ -19,11 +24,11 @@ class CustomerFactory extends Factory
         return [
             'nome' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
-            'telefone' => '11999999999',
-            'data_nascimento' => '1990-01-01',
-            'endereco' => 'Rua Exemplo',
-            'bairro' => 'Centro',
-            'cep' => '12345678',
+            'telefone' => $this->faker->phoneNumber,
+            'data_nascimento' => $this->faker->dateTimeBetween('-30 years', '-18 years')->format('Y-m-d'),
+            'endereco' => $this->faker->streetAddress,
+            'bairro' =>  $this->faker->citySuffix,
+            'cep' => $this->faker->postcode,
         ];
     }
 }
