@@ -21,7 +21,7 @@ class OrderFactory extends Factory
     {
         return [
             'customers_id' => Customer::factory(),
-            
+            'status' => 'created',
         ];
     }
  
@@ -35,7 +35,7 @@ class OrderFactory extends Factory
             collect($products)->each(function ($product) use ($order) {
                 $order->products()->attach($product->id, [
                     'quantidade' => rand(1, 4),
-                    'valorCompra' => $product->price ?? fake()->randomFloat(2, 10, 100),
+                    'valorCompra' => $product->preco ?? fake()->randomFloat(2, 10, 100),
                 ]);
             });
         });

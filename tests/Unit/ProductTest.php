@@ -27,7 +27,8 @@ class ProductTest extends TestCase
 
         $response = $this->getJson($this->endpoint);
 
-        $response->assertStatus(Response::HTTP_OK)->assertJsonCount(3);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonCount(3, 'data');
     }
 
     public function test_cria_produtos_com_foto_com_sucesso(): void

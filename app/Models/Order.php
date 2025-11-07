@@ -13,16 +13,20 @@ class Order extends Model
     /** @use HasFactory<\Database\Factories\OrderFactory> */
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['customers_id'];
+    protected $fillable = ['customers_id', 'status'];
+
+    protected $casts = [
+        'status' => 'string',
+    ];
 
     public function customer():BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class, 'customers_id');
     }
 
     public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'orders_products')
+        return $this->belongsToMany(Product::class, 'orders_products', 'orders_id', 'products_id')
         ->withPivot('quantidade', 'valorCompra') 
         ->withTimestamps();
       

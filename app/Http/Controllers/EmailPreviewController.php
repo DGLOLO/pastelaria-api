@@ -46,16 +46,19 @@ class EmailPreviewController extends Controller
             'customers_id' => $customer->id
         ]);
 
-        // Adicionar produtos ao pedido
         $products = Product::take(3)->get();
         if ($products->count() > 0) {
-            $order->products()->attach($products->pluck('id'));
+            $itemsToAttach = [];
+            foreach ($products as $product) {
+                $itemsToAttach[$product->id] = [
+                    'quantidade' => 1,
+                    'valorCompra' => $product->preco,
+                ];
+            }
+            $order->products()->attach($itemsToAttach);
         }
 
-        // Recarregar relacionamentos
         $order->load(['customer', 'products']);
-
-        // Retornar a view do email
         return view('emails.order-confirmation', compact('order'));
     }
 

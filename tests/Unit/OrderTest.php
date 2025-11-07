@@ -32,7 +32,10 @@ class OrderTest extends TestCase
 
         $orderData = [
             'customer_id' => $customer->id,
-            'products' => [$produto1->id, $produto2->id]
+            'items' => [
+                ['product_id' => $produto1->id, 'quantity' => 2],
+                ['product_id' => $produto2->id, 'quantity' => 1]
+            ]
         ];
 
 
@@ -44,9 +47,8 @@ class OrderTest extends TestCase
         //dd($response->json());
 
         $response->assertStatus(Response::HTTP_CREATED)
-            ->assertJsonFragment([
-                'customers_id' => $customer->id
-            ]);
+            ->assertJsonPath('data.customer_id', $customer->id)
+            ->assertJsonPath('data.status', 'created');
 
 
         
@@ -59,11 +61,11 @@ class OrderTest extends TestCase
 
         $response = $this->postJson($this->endpoint, [
             'customer_id' => $customer->id,
-            'products' => []
+            'items' => []
         ]);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
-            ->assertJsonValidationErrors('products');
+            ->assertJsonValidationErrors('items');
     }
 
     public function test_criar_pedido_sem_cliente(): void
@@ -71,7 +73,7 @@ class OrderTest extends TestCase
         $product = Product::factory()->create();
 
         $response = $this->postJson($this->endpoint, [
-            'products' => [
+            'items' => [
                 ['product_id' => $product->id, 'quantity' => 1],
             ],
         ]);
@@ -87,7 +89,7 @@ class OrderTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertJsonValidationErrors([
                 'customer_id',
-                'products'
+                'items'
             ]);
     }
 
@@ -132,7 +134,41 @@ class OrderTest extends TestCase
 
         $response = $this->getJson($this->endpoint);
 
-        $response->assertStatus(Response::HTTP_OK)->assertJsonCount(3);
+        $response->assertStatus(Response::HTTP_OK)
+                 ->assertJsonPath('per_page', 15)
+                 ->assertJsonPath('current_page', 1)
+                 ->assertJsonPath('total', 3)
+                 ->assertJsonCount(3, 'data');
+    }
+
+    public function test_lista_pedidos_com_paginacao(): void
+    {
+        // Criar 25 pedidos
+        Order::factory()->count(25)->create();
+
+        // Testar primeira página (padrão: 15 itens)
+        $response = $this->getJson($this->endpoint);
+
+        $response->assertStatus(Response::HTTP_OK)
+                 ->assertJsonPath('per_page', 15)
+                 ->assertJsonPath('current_page', 1)
+                 ->assertJsonPath('total', 25)
+                 ->assertJsonPath('last_page', 2)
+                 ->assertJsonCount(15, 'data');
+
+        // Testar segunda página
+        $response = $this->getJson($this->endpoint . '?page=2');
+
+        $response->assertStatus(Response::HTTP_OK)
+                 ->assertJsonPath('current_page', 2)
+                 ->assertJsonCount(10, 'data'); // 25 - 15 = 10
+
+        // Testar per_page customizado
+        $response = $this->getJson($this->endpoint . '?per_page=5');
+
+        $response->assertStatus(Response::HTTP_OK)
+                 ->assertJsonPath('per_page', 5)
+                 ->assertJsonCount(5, 'data');
     }
 
     public function test_criar_pedido_com_cliente_invalido(): void
@@ -143,7 +179,7 @@ class OrderTest extends TestCase
 
         $orderData = [
             'customer_id' => $idClienteInvalido,
-            'products' => [
+            'items' => [
                 ['product_id' => $product->id, 'quantity' => 1],
             ],
         ];
@@ -163,7 +199,9 @@ class OrderTest extends TestCase
 
         $orderData = [
             'customer_id' => $customer->id,
-            'products' => [$product->id]
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1]
+            ]
         ];
 
         $response = $this->postJson($this->endpoint, $orderData);
@@ -171,7 +209,7 @@ class OrderTest extends TestCase
         $response->assertStatus(Response::HTTP_CREATED);
 
         $this->assertDatabaseHas('orders_products', [
-            'orders_id' => $response->json('id'),
+            'orders_id' => $response->json('data.id'),
             'products_id' => $product->id,
         ]);
     }
@@ -187,14 +225,16 @@ class OrderTest extends TestCase
 
         $orderData = [
              'customer_id' => $customer->id,
-            'products' => [$product->id]
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1]
+            ]
         ];
 
         $response = $this->postJson($this->endpoint, $orderData);
 
         $response->assertStatus(Response::HTTP_CREATED);
 
-        Mail::assertSent(OrderConfirmation::class, function ($mail) use ($customer) {
+        Mail::assertQueued(OrderConfirmation::class, function ($mail) use ($customer) {
             return $mail->hasTo($customer->email);
                 
         });
@@ -216,23 +256,24 @@ class OrderTest extends TestCase
 
         $orderData = [
             'customer_id' => $customer->id,
-            'products' => [$product->id],
-            
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1]
+            ],
         ];
 
         $response = $this->postJson($this->endpoint, $orderData);
 
 
         $response->assertStatus(Response::HTTP_CREATED)
-            ->assertJsonPath('customer.email', $email)
-            ->assertJsonFragment(["message" => "Pedido criado com sucesso."]);
+            ->assertJsonPath('data.customer.email', $email)
+            ->assertJsonPath('message', 'Pedido criado com sucesso.');
 
         $this->assertDatabaseHas('orders', [
             'customers_id' => $customer->id,
-            'id' => $response->json('id')
+            'id' => $response->json('data.id')
         ]);
 
 
-        Mail::assertSent(OrderConfirmation::class);
+        Mail::assertQueued(OrderConfirmation::class);
     }
 }

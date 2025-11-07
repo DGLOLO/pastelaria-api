@@ -459,84 +459,174 @@
                 "tags": [
                     "Orders"
                 ],
-                "summary": "Listar todos os pedidos",
+                "summary": "Listar todos os pedidos (paginado)",
                 "operationId": "2cd7e03021e72d9d799c12dfe179c865",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número da página",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Itens por página (máximo 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Lista de pedidos retornada com sucesso",
+                        "description": "Lista de pedidos retornada com sucesso (paginado)",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "customer_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "created_at": {
-                                                "type": "string",
-                                                "format": "datetime",
-                                                "example": "2024-01-01T10:00:00.000000Z"
-                                            },
-                                            "updated_at": {
-                                                "type": "string",
-                                                "format": "datetime",
-                                                "example": "2024-01-01T10:00:00.000000Z"
-                                            },
-                                            "customer": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
                                                 "properties": {
                                                     "id": {
                                                         "type": "integer",
                                                         "example": 1
                                                     },
-                                                    "nome": {
-                                                        "type": "string",
-                                                        "example": "João Silva"
+                                                    "customers_id": {
+                                                        "type": "integer",
+                                                        "example": 1
                                                     },
-                                                    "email": {
+                                                    "created_at": {
                                                         "type": "string",
-                                                        "example": "joao@email.com"
+                                                        "format": "datetime",
+                                                        "example": "2024-01-01T10:00:00.000000Z"
                                                     },
-                                                    "telefone": {
+                                                    "updated_at": {
                                                         "type": "string",
-                                                        "example": "11999999999"
+                                                        "format": "datetime",
+                                                        "example": "2024-01-01T10:00:00.000000Z"
+                                                    },
+                                                    "customer": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "nome": {
+                                                                "type": "string",
+                                                                "example": "João Silva"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "joao@email.com"
+                                                            },
+                                                            "telefone": {
+                                                                "type": "string",
+                                                                "example": "11999999999"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "products": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "nome": {
+                                                                    "type": "string",
+                                                                    "example": "Pastel de Carne"
+                                                                },
+                                                                "preco": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 8.5
+                                                                },
+                                                                "foto": {
+                                                                    "type": "string",
+                                                                    "example": "https://example.com/pastel-carne.jpg"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
                                                     }
                                                 },
                                                 "type": "object"
-                                            },
-                                            "products": {
-                                                "type": "array",
-                                                "items": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Pastel de Carne"
-                                                        },
-                                                        "price": {
-                                                            "type": "number",
-                                                            "format": "float",
-                                                            "example": 8.5
-                                                        },
-                                                        "photo": {
-                                                            "type": "string",
-                                                            "example": "https://example.com/pastel-carne.jpg"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
                                             }
                                         },
-                                        "type": "object"
-                                    }
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "first_page_url": {
+                                            "type": "string",
+                                            "example": "http://localhost/api/orders?page=1"
+                                        },
+                                        "from": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "last_page_url": {
+                                            "type": "string",
+                                            "example": "http://localhost/api/orders?page=5"
+                                        },
+                                        "links": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "url": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "label": {
+                                                        "type": "string"
+                                                    },
+                                                    "active": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "next_page_url": {
+                                            "type": "string",
+                                            "example": "http://localhost/api/orders?page=2",
+                                            "nullable": true
+                                        },
+                                        "path": {
+                                            "type": "string",
+                                            "example": "http://localhost/api/orders"
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "prev_page_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "to": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 75
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -556,7 +646,7 @@
                             "schema": {
                                 "required": [
                                     "customer_id",
-                                    "products"
+                                    "items"
                                 ],
                                 "properties": {
                                     "customer_id": {
@@ -564,12 +654,22 @@
                                         "type": "integer",
                                         "example": 1
                                     },
-                                    "products": {
-                                        "description": "Array de IDs dos produtos",
+                                    "items": {
+                                        "description": "Array de itens do pedido",
                                         "type": "array",
                                         "items": {
-                                            "type": "integer",
-                                            "example": 1
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "description": "Quantidade do produto",
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     }
                                 },

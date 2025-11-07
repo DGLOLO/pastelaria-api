@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Mail\OrderConfirmation;
+use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\UpdateOrderRequest;
+use App\Http\Resources\OrderResource;
 use Symfony\Component\HttpFoundation\Response;
 
 class OrderController extends Controller
@@ -17,44 +20,85 @@ class OrderController extends Controller
     /**
      * @OA\Get(
      *     path="/api/orders",
-     *     summary="Listar todos os pedidos",
+     *     summary="Listar todos os pedidos (paginado)",
      *     tags={"Orders"},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Número da página",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Itens por página (máximo 100)",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=15)
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de pedidos retornada com sucesso",
+     *         description="Lista de pedidos retornada com sucesso (paginado)",
      *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="customer_id", type="integer", example=1),
-     *                 @OA\Property(property="created_at", type="string", format="datetime", example="2024-01-01T10:00:00.000000Z"),
-     *                 @OA\Property(property="updated_at", type="string", format="datetime", example="2024-01-01T10:00:00.000000Z"),
-     *                 @OA\Property(
-     *                     property="customer",
-     *                     type="object",
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
      *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="nome", type="string", example="João Silva"),
-     *                     @OA\Property(property="email", type="string", example="joao@email.com"),
-     *                     @OA\Property(property="telefone", type="string", example="11999999999")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="products",
-     *                     type="array",
-     *                     @OA\Items(
+     *                     @OA\Property(property="customers_id", type="integer", example=1),
+     *                     @OA\Property(property="created_at", type="string", format="datetime", example="2024-01-01T10:00:00.000000Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="datetime", example="2024-01-01T10:00:00.000000Z"),
+     *                     @OA\Property(
+     *                         property="customer",
+     *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="name", type="string", example="Pastel de Carne"),
-     *                         @OA\Property(property="price", type="number", format="float", example=8.50),
-     *                         @OA\Property(property="photo", type="string", example="https://example.com/pastel-carne.jpg")
+     *                         @OA\Property(property="nome", type="string", example="João Silva"),
+     *                         @OA\Property(property="email", type="string", example="joao@email.com"),
+     *                         @OA\Property(property="telefone", type="string", example="11999999999")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="products",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="nome", type="string", example="Pastel de Carne"),
+     *                             @OA\Property(property="preco", type="number", format="float", example=8.50),
+     *                             @OA\Property(property="foto", type="string", example="https://example.com/pastel-carne.jpg")
+     *                         )
      *                     )
      *                 )
-     *             )
+     *             ),
+     *             @OA\Property(property="current_page", type="integer", example=1),
+     *             @OA\Property(property="first_page_url", type="string", example="http://localhost/api/orders?page=1"),
+     *             @OA\Property(property="from", type="integer", example=1),
+     *             @OA\Property(property="last_page", type="integer", example=5),
+     *             @OA\Property(property="last_page_url", type="string", example="http://localhost/api/orders?page=5"),
+     *             @OA\Property(property="links", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="url", type="string", nullable=true),
+     *                     @OA\Property(property="label", type="string"),
+     *                     @OA\Property(property="active", type="boolean")
+     *                 )
+     *             ),
+     *             @OA\Property(property="next_page_url", type="string", nullable=true, example="http://localhost/api/orders?page=2"),
+     *             @OA\Property(property="path", type="string", example="http://localhost/api/orders"),
+     *             @OA\Property(property="per_page", type="integer", example=15),
+     *             @OA\Property(property="prev_page_url", type="string", nullable=true),
+     *             @OA\Property(property="to", type="integer", example=15),
+     *             @OA\Property(property="total", type="integer", example=75)
      *         )
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Order::with(['customer', 'products'])->get();
+        $perPage = $request->get('per_page', 15);
+        $perPage = min(max(1, (int) $perPage), 100);
+        
+        $orders = Order::with(['customer', 'products'])->paginate($perPage);
+        $orders->getCollection()->transform(function ($order) {
+            return new OrderResource($order);
+        });
+        
+        return $orders;
     }
 
     /**
@@ -65,13 +109,16 @@ class OrderController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"customer_id","products"},
+     *             required={"customer_id","items"},
      *             @OA\Property(property="customer_id", type="integer", example=1, description="ID do cliente"),
      *             @OA\Property(
-     *                 property="products",
+     *                 property="items",
      *                 type="array",
-     *                 description="Array de IDs dos produtos",
-     *                 @OA\Items(type="integer", example=1)
+     *                 description="Array de itens do pedido",
+     *                 @OA\Items(
+     *                     @OA\Property(property="product_id", type="integer", example=1),
+     *                     @OA\Property(property="quantity", type="integer", example=2, description="Quantidade do produto")
+     *                 )
      *             )
      *         )
      *     ),
@@ -124,29 +171,33 @@ class OrderController extends Controller
      *     )
      * )
      */
-    public function store(Request $request)
+    public function store(StoreOrderRequest $request)
     {
-        $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'products' => 'required|array',
-            'products.*' => 'exists:products,id',
-        ]);
+        return DB::transaction(function () use ($request) {
+            $order = Order::create([
+                'customers_id' => $request->customer_id,
+                'status' => 'created',
+            ]);
 
-        $order = Order::create([
-            'customers_id' => $request->customer_id,
-        ]);
+            $itemsToAttach = [];
+            foreach ($request->items as $item) {
+                $product = Product::findOrFail($item['product_id']);
+                
+                $itemsToAttach[$product->id] = [
+                    'quantidade' => $item['quantity'],
+                    'valorCompra' => $product->preco,
+                ];
+            }
 
-        $order->products()->attach($request->products);
+            $order->products()->attach($itemsToAttach);
+            $order->load(['customer', 'products']);
+            Mail::to($order->customer->email)->queue(new OrderConfirmation($order));
 
-        // Send email notification with order details
-        Mail::to($order->customer->email)->send(new OrderConfirmation($order));
-
-        return response()->json([
-            ...$order->toArray(),
-            'customer' => $order->customer,
-            'products' => $order->products,
-            'message' => 'Pedido criado com sucesso.' // Mensagem adicionada
-        ], Response::HTTP_CREATED);
+            return (new OrderResource($order))
+                ->additional(['message' => 'Pedido criado com sucesso.'])
+                ->response()
+                ->setStatusCode(Response::HTTP_CREATED);
+        });
     }
 
     /**
@@ -208,7 +259,8 @@ class OrderController extends Controller
      */
     public function show($id)
     {
-        return Order::with(['products', 'customer'])->findOrFail($id);
+        $order = Order::with(['products', 'customer'])->findOrFail($id);
+        return new OrderResource($order);
     }
 
 
@@ -302,48 +354,35 @@ class OrderController extends Controller
      *     )
      * )
      */
-    public function update(Request $request, $id)
+    public function update(UpdateOrderRequest $request, $id)
     {
-        $request->validate([
-            'customer_id' => 'sometimes|exists:customers,id',
-            'products' => 'sometimes|array|min:1',
-            'products.*' => 'exists:products,id',
-        ]);
-
         $order = Order::findOrFail($id);
 
-        DB::beginTransaction();
-
-        try {
-            // Atualiza o cliente, se enviado
-            if ($request->has('customer_id')) {
-                $order->update(['customer_id' => $request->customer_id]);
+        return DB::transaction(function () use ($request, $order) {
+            if ($request->has('status')) {
+                $order->update(['status' => $request->status]);
             }
 
-            // Atualiza os produtos (sincroniza os IDs)
-            if ($request->has('products')) {
-                $order->products()->sync($request->products);
+            if ($request->has('items')) {
+                $itemsToSync = [];
+                foreach ($request->items as $item) {
+                    $product = Product::findOrFail($item['product_id']);
+                    
+                    $itemsToSync[$product->id] = [
+                        'quantidade' => $item['quantity'],
+                        'valorCompra' => $product->preco,
+                    ];
+                }
+                $order->products()->sync($itemsToSync);
             }
 
-            DB::commit();
+            $order->load(['customer', 'products']);
 
-            return response()->json([
-                'message' => 'Pedido atualizado com sucesso.',
-                'order' => $order->load(['customer', 'products']),
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Log::error('Erro ao atualizar pedido: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all(),
-            ]);
-
-            return response()->json([
-                'message' => 'Erro ao atualizar o pedido.',
-                'error' => config('app.debug') ? $e->getMessage() : null,
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+            return (new OrderResource($order))
+                ->additional(['message' => 'Pedido atualizado com sucesso.'])
+                ->response()
+                ->setStatusCode(Response::HTTP_OK);
+        });
     }
 
 

@@ -171,7 +171,7 @@
 
             <div class="preview-section">
                 <h2>🔗 Links Úteis</h2>
-                <a href="/api" target="_blank" class="preview-button">
+                <a href="/api/documentation" target="_blank" class="preview-button">
                     🌐 API Documentation
                 </a>
                 <a href="/api/products" target="_blank" class="preview-button">

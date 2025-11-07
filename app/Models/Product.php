@@ -13,7 +13,7 @@ class Product extends Model
     /** @use HasFactory<\Database\Factories\ProductFactory> */
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['nome', 'preco', 'foto'];
+    protected $fillable = ['nome', 'preco', 'foto', 'type'];
 
     protected $cast =[
         'preco'=>'decimal:2',
@@ -21,7 +21,7 @@ class Product extends Model
 
     public function orders(): BelongsToMany
     {
-        return $this->belongsToMany(Order::class)-> withTimestamps();
+        return $this->belongsToMany(Order::class, 'orders_products', 'products_id', 'orders_id')->withTimestamps();
     }
 
     public function getPhotoUrlAttribute (): String|null{

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Resources\ProductResource;
 
 class ProductController extends Controller
 {
@@ -31,7 +33,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return Product::all();
+        return ProductResource::collection(Product::all());
     }
 
     /**
@@ -73,29 +75,21 @@ class ProductController extends Controller
      *     )
      * )
      */
-   public function store(Request $request)
+   public function store(StoreProductRequest $request)
 {
+    $validated = $request->validated();
+    
     // Validação diferente para arquivo vs URL
     if ($request->hasFile('foto')) {
-        $validated = $request->validate([
-            'nome' => 'required',
-            'preco' => 'required|numeric',
-            'foto' => 'required|image'
-        ]);
-        
         $path = $request->file('foto')->store('products', 'public');
         $validated['foto'] = $path;
-    } else {
-        $validated = $request->validate([
-            'nome' => 'required',
-            'preco' => 'required|numeric',
-            'foto' => 'required|string|url'
-        ]);
     }
 
     $product = Product::create($validated);
     
-    return response()->json($product, 201);
+    return (new ProductResource($product))
+        ->response()
+        ->setStatusCode(201);
 }
 
     /**
@@ -130,7 +124,8 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        return Product::findOrFail($id);
+        $product = Product::findOrFail($id);
+        return new ProductResource($product);
     }
 
     /**
@@ -193,8 +188,9 @@ class ProductController extends Controller
         ]);
 
         $product->update($request->all());
+        $product->refresh();
 
-        return response()->json($product);
+        return new ProductResource($product);
     }
 
     /**

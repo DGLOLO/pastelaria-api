@@ -41,5 +41,23 @@ services:
     depends_on:
       - app
 
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www
+    environment:
+      - APP_ENV=local
+      - APP_KEY=${APP_KEY}
+      - DB_HOST=db
+      - DB_DATABASE=pastelaria
+      - DB_USERNAME=root
+      - DB_PASSWORD=123456
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    depends_on:
+      - db
+      - app
+
 volumes:
   mysql_data:
