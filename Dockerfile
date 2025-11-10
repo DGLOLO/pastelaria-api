@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     curl \
     git \
+    build-essential \
+    autoconf \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,6 +28,11 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         xml \
         bcmath
 
+# PASSO 2.1: Instalar Xdebug para cobertura de código
+RUN pecl install xdebug \
+    && echo "zend_extension=/usr/local/lib/php/extensions/no-debug-non-zts-20220829/xdebug.so" > /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.mode=coverage" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+
 # PASSO 3: Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -38,7 +45,6 @@ WORKDIR /var/www
 
 # PASSO 6: Copiar todo o código da aplicação
 COPY --chown=www:www . .
-
 
 # PASSO 7: Configurar permissões para Laravel
 RUN chown -R www:www /var/www \

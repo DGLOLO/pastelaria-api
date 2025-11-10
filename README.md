@@ -62,19 +62,58 @@ Para produção, configure suas credenciais SMTP no arquivo `.env`.
 docker compose exec app php artisan test
 ```
 
-### Testes implementados
--  **CustomerTest** - Testes de criação de clientes
--  **ProductTest** - Testes de criação de produtos  
--  **OrderTest** - Testes de criação de pedidos
--  **OrderEmailTest** - Testes de envio de emails
+### Executar testes com cobertura
+```bash
+docker compose exec app vendor/bin/phpunit --coverage-html coverage/html --coverage-text
+```
 
-### Cobertura de testes
-- Validações de entrada
-- Criação de registros
-- Relacionamentos entre entidades
-- Envio de emails
-- Soft delete
-- Validação de email único
+Após executar, acesse o relatório HTML em: `coverage/html/index.html`
+
+### Testes implementados
+-  **CustomerTest** - 10 testes (criação, listagem, atualização, exclusão, validações)
+-  **ProductTest** - 9 testes (criação, listagem, atualização, exclusão, validações)
+-  **OrderTest** - 11 testes (criação, listagem, paginação, envio de emails, validações)
+
+**Nota:** Os testes de email estão incluídos em `OrderTest` (métodos `test_pedido_criado_email_enviado` e `test_email_mensagem_sucesso`).
+
+### Testes negativos implementados
+
+#### CustomerTest
+- ❌ Email ausente
+- ❌ Email inválido
+- ❌ Email duplicado
+- ❌ Cliente não encontrado
+- ❌ Criar cliente sem dados obrigatórios
+
+#### ProductTest
+- ❌ Foto ausente
+- ❌ Foto inválida (ex: PDF ao invés de imagem)
+- ❌ Preço inválido
+- ❌ Campos obrigatórios ausentes
+
+#### OrderTest
+- ❌ Pedido sem produtos
+- ❌ Pedido sem cliente
+- ❌ Cliente inválido
+- ❌ Campos obrigatórios faltando
+
+### Cobertura de código
+A cobertura de código está configurada no `phpunit.xml`. O Xdebug está instalado.
+
+**Gerar relatório de cobertura:**
+```bash
+./coverage.sh
+```
+
+**Visualizar no navegador:**
+```bash
+./open-coverage.sh
+```
+
+Os relatórios são gerados em:
+- HTML: `coverage/html/index.html` (abrir no navegador)
+- Clover XML: `coverage/clover.xml`
+- Texto: `coverage/coverage.txt`
 
 ##  Docker
 
