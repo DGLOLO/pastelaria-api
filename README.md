@@ -72,9 +72,15 @@ Após executar, acesse o relatório HTML em: `coverage/html/index.html`
 ### Testes implementados
 -  **CustomerTest** - 10 testes (criação, listagem, atualização, exclusão, validações)
 -  **ProductTest** - 9 testes (criação, listagem, atualização, exclusão, validações)
--  **OrderTest** - 11 testes (criação, listagem, paginação, envio de emails, validações)
-
-**Nota:** Os testes de email estão incluídos em `OrderTest` (métodos `test_pedido_criado_email_enviado` e `test_email_mensagem_sucesso`).
+-  **OrderTest** - 19 testes:
+  - Criação de pedido com um ou mais produtos
+  - Listagem de pedidos (com e sem paginação)
+  - Detalhamento de pedido (existente e inexistente)
+  - Atualização de pedido (status, itens, ou ambos)
+  - Exclusão de pedido (soft delete)
+  - Validações (sem produtos, sem cliente, cliente inválido, campos obrigatórios)
+  - Envio de emails (2 testes: `test_pedido_criado_email_enviado` e `test_email_mensagem_sucesso`)
+  - Validação de preço e relacionamentos
 
 ### Testes negativos implementados
 
@@ -92,10 +98,14 @@ Após executar, acesse o relatório HTML em: `coverage/html/index.html`
 - ❌ Campos obrigatórios ausentes
 
 #### OrderTest
-- ❌ Pedido sem produtos
-- ❌ Pedido sem cliente
-- ❌ Cliente inválido
-- ❌ Campos obrigatórios faltando
+- ❌ Pedido sem produtos (`test_falha_ao_criar_pedido_sem_produtos`)
+- ❌ Pedido sem cliente (`test_criar_pedido_sem_cliente`)
+- ❌ Cliente inválido (`test_criar_pedido_com_cliente_invalido`)
+- ❌ Campos obrigatórios faltando (`test_Campos_obrigadorios_do_pedido_faltado`)
+- ❌ Pedido inexistente (`test_detalha_pedido_inexistente`)
+- ❌ Status inválido na atualização (`test_falha_ao_atualizar_pedido_com_status_invalido`)
+- ❌ Produto inexistente na atualização (`test_falha_ao_atualizar_pedido_com_produto_inexistente`)
+- ❌ Pedido inexistente na atualização (`test_falha_ao_atualizar_pedido_inexistente`)
 
 ### Cobertura de código
 A cobertura de código está configurada no `phpunit.xml`. O Xdebug está instalado.
@@ -162,6 +172,7 @@ docker compose exec app php artisan cache:clear
 - `GET /api/orders` - Listar pedidos
 - `POST /api/orders` - Criar pedido
 - `GET /api/orders/{id}` - Buscar pedido
+- `PUT /api/orders/{id}` - Atualizar pedido (status e/ou itens)
 - `DELETE /api/orders/{id}` - Excluir pedido
 
 

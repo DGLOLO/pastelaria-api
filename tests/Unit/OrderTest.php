@@ -276,4 +276,114 @@ class OrderTest extends TestCase
 
         Mail::assertQueued(OrderConfirmation::class);
     }
+
+    public function test_atualiza_status_do_pedido(): void
+    {
+        $order = Order::factory()->create(['status' => 'created']);
+
+        $response = $this->putJson("{$this->endpoint}/{$order->id}", [
+            'status' => 'confirmed'
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonPath('data.status', 'confirmed')
+            ->assertJsonPath('message', 'Pedido atualizado com sucesso.');
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'confirmed'
+        ]);
+    }
+
+    public function test_atualiza_itens_do_pedido(): void
+    {
+        $order = Order::factory()->create();
+        $product1 = Product::factory()->create(['preco' => 10.50]);
+        $product2 = Product::factory()->create(['preco' => 20.75]);
+
+        $response = $this->putJson("{$this->endpoint}/{$order->id}", [
+            'items' => [
+                ['product_id' => $product1->id, 'quantity' => 2],
+                ['product_id' => $product2->id, 'quantity' => 1]
+            ]
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonPath('message', 'Pedido atualizado com sucesso.');
+
+        $this->assertDatabaseHas('orders_products', [
+            'orders_id' => $order->id,
+            'products_id' => $product1->id,
+            'quantidade' => 2
+        ]);
+
+        $this->assertDatabaseHas('orders_products', [
+            'orders_id' => $order->id,
+            'products_id' => $product2->id,
+            'quantidade' => 1
+        ]);
+    }
+
+    public function test_atualiza_status_e_itens_juntos(): void
+    {
+        $order = Order::factory()->create(['status' => 'created']);
+        $product = Product::factory()->create(['preco' => 15.99]);
+
+        $response = $this->putJson("{$this->endpoint}/{$order->id}", [
+            'status' => 'confirmed',
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 3]
+            ]
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonPath('data.status', 'confirmed')
+            ->assertJsonPath('message', 'Pedido atualizado com sucesso.');
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'confirmed'
+        ]);
+
+        $this->assertDatabaseHas('orders_products', [
+            'orders_id' => $order->id,
+            'products_id' => $product->id,
+            'quantidade' => 3
+        ]);
+    }
+
+    public function test_falha_ao_atualizar_pedido_com_status_invalido(): void
+    {
+        $order = Order::factory()->create();
+
+        $response = $this->putJson("{$this->endpoint}/{$order->id}", [
+            'status' => 'status_invalido'
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors('status');
+    }
+
+    public function test_falha_ao_atualizar_pedido_com_produto_inexistente(): void
+    {
+        $order = Order::factory()->create();
+
+        $response = $this->putJson("{$this->endpoint}/{$order->id}", [
+            'items' => [
+                ['product_id' => 99999, 'quantity' => 1]
+            ]
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonValidationErrors('items.0.product_id');
+    }
+
+    public function test_falha_ao_atualizar_pedido_inexistente(): void
+    {
+        $response = $this->putJson("{$this->endpoint}/99999", [
+            'status' => 'confirmed'
+        ]);
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
 }
